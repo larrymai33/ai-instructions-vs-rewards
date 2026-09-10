@@ -84,28 +84,46 @@ These findings apply to the tested Qwen3-4B setup. They provide a stronger metho
 | [`report/takehome.md`](report/takehome.md) | Full analysis, interpretation, limitations, and references |
 | [`METHODOLOGY.md`](METHODOLOGY.md) | Experimental logic and causal predictions |
 | [`preregistration/`](preregistration) | Frozen plans and amendments made before the relevant runs |
-| [`experiments/`](experiments) | Broad-screen code plus Qwen prompts, helpers, tests, and as-run provenance |
+| [`experiments/`](experiments) | Broad-screen Python code plus Qwen prompts, helpers, tests, and as-run provenance |
 | [`results/`](results) | Behavioral results, probability scores, analyses, and audit records |
+| [`scripts/verify.py`](scripts/verify.py) | Cross-platform, model-free verification entry point |
 | [`ARTIFACTS.md`](ARTIFACTS.md) | Provenance, excluded binaries, hashes, and collection-finalization details |
 | [`report/odd-number-model-forensics-takehome.docx`](report/odd-number-model-forensics-takehome.docx) | Audited publication copy of the report |
 
 ## Verify the evidence
 
-The repository includes a read-only, model-free verifier. It requires Python 3 and PowerShell 7 (`pwsh`), but no model files or third-party Python packages. From the repository root, run:
+The repository includes a read-only, model-free verifier for Windows, Linux, and macOS. It requires Python 3.11 or newer, but no model files or third-party packages. From the repository root, run:
+
+```bash
+python scripts/verify.py
+```
+
+It runs the Python test suite and checks artifact hashes, schedule and score identities, all 112 probability rows, recomputed statistics, behavioral counts, provenance records, privacy patterns, and the tracked-file size limit. GitHub Actions runs the same command on Ubuntu, Windows, and macOS. It does **not** download or start a model, open a server, or send an HTTP request.
+
+This verifies the integrity and internal consistency of the published evidence; it is not a fresh rerun of model inference. Model weights and runtime binaries are intentionally excluded because of their size. Their exact versions, hashes, and official sources are recorded in [`ARTIFACTS.md`](ARTIFACTS.md). The retained portable Qwen helpers are documented in [`experiments/qwen3-4b/portable/README.md`](experiments/qwen3-4b/portable/README.md), but the repository does not claim to include a turnkey portable model runner.
+
+The original PowerShell verifier remains available as a Windows compatibility and parity check:
 
 ```powershell
 pwsh -NoProfile -File scripts/verify.ps1
 ```
 
-It runs the test suite and checks artifact hashes, schedule and score identities, all 112 probability rows, recomputed statistics, behavioral counts, provenance records, privacy patterns, and the tracked-file size limit. It does **not** download or start a model, open a server, or send an HTTP request.
+The PowerShell files under `experiments/qwen3-4b/as-run/` are retained as immutable records of the original Windows run, not as the primary interface for this repository.
 
-This verifies the integrity and internal consistency of the published evidence; it is not a fresh rerun of model inference. Model weights and runtime binaries are intentionally excluded because of their size. Their exact versions, hashes, and official sources are recorded in [`ARTIFACTS.md`](ARTIFACTS.md). The retained portable Qwen helpers are documented in [`experiments/qwen3-4b/portable/README.md`](experiments/qwen3-4b/portable/README.md), but the repository does not claim to include a turnkey portable model runner.
+The Python publication gates can also be run independently:
+
+```bash
+python scripts/privacy_check.py
+python scripts/history_privacy_check.py --ref refs/heads/main --expected-author-name "<approved-release-name>" --expected-author-email "<approved-release-email>"
+```
+
+The history command audits every commit and blob reachable from the selected ref. Supply the explicitly approved public release identity; do not substitute an unreviewed local Git identity.
 
 ## Build a local copy of the report
 
 The checked-in DOCX is the audited publication copy. To build a separate, non-authoritative copy:
 
-```powershell
+```bash
 python -m pip install -r report/requirements.txt
 python report/build_report.py
 ```
