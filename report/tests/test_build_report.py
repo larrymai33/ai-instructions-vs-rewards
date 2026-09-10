@@ -42,7 +42,7 @@ class ReportBuilderSafetyTests(unittest.TestCase):
         result = self.run_builder()
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(str(self.root / "generated" / AUDITED_NAME), result.stdout)
+        self.assertIn(str((self.root / "generated" / AUDITED_NAME).resolve()), result.stdout)
         self.assertFalse((self.root / "generated" / AUDITED_NAME).exists())
         self.assertEqual(self.audited.read_bytes(), b"audited-sentinel")
         for name, expected in self.figure_bytes.items():
@@ -59,7 +59,7 @@ class ReportBuilderSafetyTests(unittest.TestCase):
         result = self.run_builder("--output", str(self.audited), "--force")
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(str(self.audited), result.stdout)
+        self.assertIn(str(self.audited.resolve()), result.stdout)
         self.assertEqual(self.audited.read_bytes(), b"audited-sentinel")
 
 

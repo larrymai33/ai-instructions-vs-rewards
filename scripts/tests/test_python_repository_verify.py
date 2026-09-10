@@ -1,3 +1,5 @@
+import hashlib
+import json
 import subprocess
 import sys
 import tempfile
@@ -16,6 +18,23 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class RepositoryVerificationTests(unittest.TestCase):
+    def test_frozen_broad_screen_hashes_match_staged_git_blobs(self):
+        reference = json.loads(
+            (REPO_ROOT / "results" / "derived" / "verification-reference.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        for source in reference["broad_screen"]["sources"]:
+            result = subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "show", f":{source['path']}"],
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
+            with self.subTest(path=source["path"]):
+                self.assertEqual(hashlib.sha256(result.stdout).hexdigest(), source["sha256"])
+
     def test_frozen_repository_recomputes_published_results(self):
         summary = verify_repository(REPO_ROOT)
         self.assertEqual(summary["status"], "passed")
